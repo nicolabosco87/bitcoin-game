@@ -5,9 +5,8 @@ import * as CONSTANTS from './constants';
 export const ACTION_START_GAME = 'ACTION_START_GAME';
 export const ACTION_DO_MARKET_CHANGE = 'ACTION_DO_MARKET_CHANGE';
 export const ACTION_TOGGLE_INVEST = 'ACTION_TOGGLE_INVEST';
-
-
-const MAX_GRAPH_CHANGES_TO_SHOW = 20;
+export const ACTION_CHECK_SHOW_PLAYER_LAST_DELTA = 'ACTION_CHECK_SHOW_PLAYER_LAST_DELTA';
+export const MAX_GRAPH_CHANGES_TO_SHOW = 20;
 const FUNDS_MAX_DECIMALS = 3;
 const TRUNC_FOR_MAX_DECIMALS = Math.pow(10, FUNDS_MAX_DECIMALS);
 
@@ -20,6 +19,8 @@ export interface StateInterface {
   playerFundsEurOnInvest: number;
   playerFundsBtc: number;
   playerLastDelta: number;
+  showPlayerLastDelta: boolean;
+  playerLastDeltaLastShow: number;
   invested: boolean;
   startTime: number;
   currentChangeValue: number;
@@ -36,13 +37,15 @@ export const defaultStore: StateInterface = {
   playerFundsEurOnInvest: 100,
   playerFundsBtc: 0,
   playerLastDelta: 0,
+  showPlayerLastDelta: false,
+  playerLastDeltaLastShow: 0,
   invested: false,
   startTime: 0,
   currentChangeValue: 0,
   changeValuePositiveTrend: true,
   level: 1,
   changeValueChanges: 0,
-  lastChangesValues: [],
+  lastChangesValues: [10000],
 };
 
 
@@ -53,6 +56,8 @@ export const Mutations = {
     state.playerFundsEur = 100;
     state.playerFundsEurOnInvest = 100;
     state.currentChangeValue = 10000;
+    state.showPlayerLastDelta = false;
+    state.playerLastDeltaLastShow = 0;
     state.playerFundsBtc = state.playerFundsEur / state.currentChangeValue;
     state.startTime = Date.now();
     state.level = 1;
@@ -104,9 +109,20 @@ export const Mutations = {
     } else {
       state.playerLastDelta = Math.trunc((state.playerFundsEur - state.playerFundsEurOnInvest) * TRUNC_FOR_MAX_DECIMALS)
           / TRUNC_FOR_MAX_DECIMALS;
+      state.showPlayerLastDelta = true;
+      const now = new Date();
+      state.playerLastDeltaLastShow = now.getTime();
     }
     return state;
   },
+
+  checkShowPlayerLastDelta(state: StateInterface) {
+    const now = new Date();
+    if ((state.playerLastDeltaLastShow - now.getTime()) < 3000) {
+      state.showPlayerLastDelta = false;
+    }
+  },
+
 };
 
 
@@ -121,8 +137,17 @@ export const Actions = {
     setTimeout(() => dispatch(ACTION_DO_MARKET_CHANGE), Math.ceil(Math.random() * 1000) );
   },
 
-  ACTION_TOGGLE_INVEST: ({commit}: any) => {
+  ACTION_TOGGLE_INVEST: ({dispatch, commit}: any) => {
     commit('toggleInvest');
+  },
+
+  ACTION_CHECK_SHOW_PLAYER_LAST_DELTA: ({dispatch, commit, state}: any) => {
+    commit('checkShowPlayerLastDelta');
+
+    if (state.gameStatus === CONSTANTS.GAME_STATUS_ONGOING) {
+      setTimeout(() => dispatch(ACTION_CHECK_SHOW_PLAYER_LAST_DELTA), 1000);
+    }
+
   },
 };
 

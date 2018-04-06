@@ -1,9 +1,9 @@
 <template>
   <div class="row">
-    <div class="col-xs-12 text-center">
+    <div class="col text-center">
       <h1>BTC</h1>
 
-      <button class="btn btn-primary">Play</button>
+      <router-link class="btn btn-primary" to="/game">Play</router-link>
     </div>
   </div>
 </template>

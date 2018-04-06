@@ -66,8 +66,15 @@
             );
         }
 
-        private mounted() {
+        public reRenderChart() {
+            if (this.chart) {
+                this.chart.destroy();
+            }
             this.renderChart(this.data, this.options);
+        }
+
+        private mounted() {
+            this.reRenderChart();
         }
 
         private beforeDestroy() {

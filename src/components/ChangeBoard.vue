@@ -2,33 +2,56 @@
 
     <div>
 
-        <!-- Modal Component -->
-        <b-modal id="modal1" title="Bootstrap-Vue" ref="myModalRef" >
-            <p class="my-4">Hello from modal!</p>
-        </b-modal>
+        <!-- Tutorial Modal -->
+        <b-modal id="startGameModal" title="Tutorial" ref="startGameModal" :centered="true"
+                 :hide-footer="true" :hide-header-close="true" :ok-disabled="true" :cancel-disabled="true"
+                 :no-close-on-backdrop="true" :no-close-on-esc="true" >
 
-        <div v-if="gameStatus == GAME_STATUS_START" >
-            <button class="btn btn-primary" v-on:click="showModal()">START GAME</button>
-        </div>
-
-
-        <div v-if="gameStatus == GAME_STATUS_ONGOING" >
-
-            <h2>Level: {{ level }}</h2>
-
-            <div class="board-changes">
-                <div v-bind:class="{'board-changes__eur-amount': true, active: !invested }" >
-                    <span>{{ playerLastDelta }}</span>
-                    {{ playerFundsEur }} EUR
-                </div>
-                <div class="board-changes__change-value">{{ currentChangeValue }} EUR/BTC</div>
-                <div v-bind:class="{'board-changes__btc-amount': true, active: invested }" >{{ playerFundsBtc }} BTC</div>
+            <div v-if="gameStatus == GAME_STATUS_START">
+                <p class="my-4">Press the "space bar" for buying/selling Bitcoins.</p>
+                <p class="my-4">Try to gain cash as much you can.</p>
             </div>
 
-            <Graph chartType="line" v-bind:data="lastChangesValues" />
+            <div v-if="gameStatus == GAME_STATUS_ENDED"></div>
 
+            <p class="my-4 text-center">
+                <button class="btn btn-primary" v-on:click="quitTutorialAndStartGame()">START GAME</button>
+            </p>
+        </b-modal>
+
+        <h2 class="mt-5">Level: {{ level }}</h2>
+
+
+        <div class="row">
+            <div class="col-auto">
+
+                <div class="row">
+                    <div class="col">
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <b-tooltip :show.sync="showPlayerLastDelta" target="usdBalance" placement="top">
+            <span :class="playerLastDelta > 0 ? 'text-success' : 'text-danger'" >
+                {{ playerLastDelta > 0 ? '+' : '' }} {{playerLastDelta}} USD
+            </span>
+        </b-tooltip>
+
+        <div class="board-changes">
+            <div id="usdBalance" v-bind:class="{'board-changes__eur-amount': true, active: !invested }"  >
+                {{ playerFundsEur }} USD
+            </div>
+            <div class="board-changes__change-value">{{ currentChangeValue }} USD/BTC</div>
+            <div v-bind:class="{'board-changes__btc-amount': true, active: invested }" >{{ playerFundsBtc }} BTC</div>
+        </div>
+
+        <Graph height="100" ref="gameGraph" chartType="line" v-bind:data="lastChangesValues" />
+
+        <div class="text-center my-4">
             <button class="btn btn-primary" v-on:click="toggleInvest()" >{{ buttonText }}</button>
-
         </div>
 
     </div>
@@ -58,27 +81,38 @@ export default class ChangeBoard extends Vue {
     @State('playerLastDelta') private playerLastDelta!: number;
     @State('currentChangeValue') private currentChangeValue!: number;
     @State('lastChangesValues') private lastChangesValues!: number[];
+    @State('showPlayerLastDelta') private showPlayerLastDelta!: boolean;
     @Action(ACTION_START_GAME) private startGame!: () => void;
     @Action(ACTION_TOGGLE_INVEST) private toggleInvest!: () => void;
 
     private GAME_STATUS_START: string = CONSTANTS.GAME_STATUS_START;
     private GAME_STATUS_ONGOING: string = CONSTANTS.GAME_STATUS_ONGOING;
-
-
+    private GAME_STATUS_ENDED: string = CONSTANTS.GAME_STATUS_ENDED;
 
     get buttonText() {
         return (this.invested) ? 'Sell' : 'Buy';
     }
 
+    private quitTutorialAndStartGame() {
+        (this.$refs.startGameModal as Modal).hide();
+        this.startGame();
+
+        // Waiting for rendering time
+        setTimeout(() => (this.$refs.gameGraph as Graph).reRenderChart(), 100);
+    }
+
     private showModal() {
-        (this.$refs.myModalRef as Modal).show();
+        (this.$refs.startGameModal as Modal).show();
     }
 
 
     private mounted() {
-         window.addEventListener('keyup', (event: KeyboardEvent) => {
-         // If spacebar has been pressed...
-         if (event.keyCode === 32) {
+
+        this.showModal();
+
+        // If spacebar has been pressed...
+        window.addEventListener('keyup', (event: KeyboardEvent) => {
+         if (event.keyCode === 32 && this.gameStatus === CONSTANTS.GAME_STATUS_ONGOING) {
              this.toggleInvest();
              }
          });
