@@ -48,7 +48,7 @@
             <div v-bind:class="{'board-changes__btc-amount': true, active: invested }" >{{ playerFundsBtc }} BTC</div>
         </div>
 
-        <Graph height="100" ref="gameGraph" chartType="line" v-bind:data="lastChangesValues" />
+        <Graph ref="gameGraph" chartType="line" v-bind:data="lastChangesValues" />
 
         <div class="text-center my-4">
             <button class="btn btn-primary" v-on:click="toggleInvest()" >{{ buttonText }}</button>

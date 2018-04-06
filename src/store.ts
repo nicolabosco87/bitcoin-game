@@ -118,7 +118,8 @@ export const Mutations = {
 
   checkShowPlayerLastDelta(state: StateInterface) {
     const now = new Date();
-    if ((state.playerLastDeltaLastShow - now.getTime()) < 3000) {
+
+    if ((now.getTime() - state.playerLastDeltaLastShow) > 2000) {
       state.showPlayerLastDelta = false;
     }
   },
@@ -130,6 +131,7 @@ export const Actions = {
   ACTION_START_GAME: ({ dispatch, commit, state }: any) => {
     commit('startGame');
     setTimeout(() => dispatch(ACTION_DO_MARKET_CHANGE), 1000);
+    dispatch(ACTION_CHECK_SHOW_PLAYER_LAST_DELTA);
   },
 
   ACTION_DO_MARKET_CHANGE: ({dispatch, commit, state}: any) => {
