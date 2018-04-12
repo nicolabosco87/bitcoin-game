@@ -1,14 +1,22 @@
 import Vue from 'vue';
 import Vuex, {Store} from 'vuex';
 import * as CONSTANTS from './constants';
+import {isMobile} from "@/lib/Utils";
 
 export const ACTION_START_GAME = 'ACTION_START_GAME';
 export const ACTION_DO_MARKET_CHANGE = 'ACTION_DO_MARKET_CHANGE';
 export const ACTION_TOGGLE_INVEST = 'ACTION_TOGGLE_INVEST';
 export const ACTION_CHECK_SHOW_PLAYER_LAST_DELTA = 'ACTION_CHECK_SHOW_PLAYER_LAST_DELTA';
+export const ACTION_ENABLE_WHALES = 'ACTION_ENABLE_WHALES';
+export const ACTION_CHECK_IS_MOBILE = 'ACTION_CHECK_IS_MOBILE';
 export const MAX_GRAPH_CHANGES_TO_SHOW = 20;
+export const LEVEL_UPGRADE_EVERY_TOT_CHANGES = 20;
+export const WHALES_ENABLED_EVERY_TOT_SECONDS = 15;
+export const WHALES_CHANGES_DURATION = 7;
+
 const FUNDS_MAX_DECIMALS = 3;
 const TRUNC_FOR_MAX_DECIMALS = Math.pow(10, FUNDS_MAX_DECIMALS);
+
 
 Vue.use(Vuex);
 
@@ -28,6 +36,10 @@ export interface StateInterface {
   level: number;
   changeValueChanges: number;
   lastChangesValues: number[];
+  whalesEnabled: boolean;
+  whalesIsPositive: boolean;
+  whalesTurn: number;
+  isMobile: boolean;
 }
 
 
@@ -41,11 +53,15 @@ export const defaultStore: StateInterface = {
   playerLastDeltaLastShow: 0,
   invested: false,
   startTime: 0,
-  currentChangeValue: 0,
+  currentChangeValue: 10000,
   changeValuePositiveTrend: true,
   level: 1,
   changeValueChanges: 0,
   lastChangesValues: [10000],
+  whalesEnabled: false,
+  whalesIsPositive: true,
+  whalesTurn: 0,
+  isMobile: false,
 };
 
 
@@ -67,13 +83,42 @@ export const Mutations = {
   },
 
   doMarketChange(state: StateInterface, customChange?: number) {
-    const change = (customChange !== undefined)
+    let change = (customChange !== undefined)
         ? customChange
-        : Math.ceil(Math.random() * 100 * state.level) - (100 * state.level / 2);
-    state.currentChangeValue += change;
+        : Math.ceil(Math.random() * 100 * Math.pow(state.level, 1.2)) - (100 * Math.pow(state.level, 1.2) / 2);
 
-    if (state.currentChangeValue <= 0) {
-      state.currentChangeValue = 1;
+    // No 0 change
+    if (change === 0) {
+      change = 1;
+    }
+
+
+    // There are whales
+    if (state.whalesEnabled) {
+      change = (change < 0) ? -change : change;
+
+      change = Math.pow(change, 1.2);
+
+      if (!state.whalesIsPositive) {
+        change = -change;
+      }
+
+      state.whalesTurn++;
+
+      if (state.whalesTurn > WHALES_CHANGES_DURATION) {
+        state.whalesTurn = 0;
+        state.whalesEnabled = false;
+      }
+    }
+
+    // Trunc the change value
+    change = (Math.trunc(change * TRUNC_FOR_MAX_DECIMALS)) / TRUNC_FOR_MAX_DECIMALS;
+    state.currentChangeValue += change;
+    state.currentChangeValue = (Math.trunc(state.currentChangeValue * TRUNC_FOR_MAX_DECIMALS)) / TRUNC_FOR_MAX_DECIMALS;
+
+    // Minimun change allowed
+    if (state.currentChangeValue <= 0.1) {
+      state.currentChangeValue = 0.1;
     }
 
     state.changeValuePositiveTrend = (change > 0);
@@ -88,10 +133,13 @@ export const Mutations = {
           / TRUNC_FOR_MAX_DECIMALS;
     }
 
-    if (state.changeValueChanges > 20) {
+    if (state.changeValueChanges > (LEVEL_UPGRADE_EVERY_TOT_CHANGES - 1)) {
       state.level++;
       state.changeValueChanges = 0;
     }
+
+
+
 
     if (state.lastChangesValues.length > MAX_GRAPH_CHANGES_TO_SHOW) {
       state.lastChangesValues.shift();
@@ -124,6 +172,18 @@ export const Mutations = {
     }
   },
 
+  enableWhales(state: StateInterface) {
+    state.whalesEnabled = true;
+    state.whalesIsPositive = (Math.random() > 0.7);
+    state.whalesTurn = 0;
+
+    return state;
+  },
+
+  checkIsMobile(state: StateInterface, payload: boolean) {
+    state.isMobile = payload;
+    return state;
+  },
 };
 
 
@@ -132,6 +192,9 @@ export const Actions = {
     commit('startGame');
     setTimeout(() => dispatch(ACTION_DO_MARKET_CHANGE), 1000);
     dispatch(ACTION_CHECK_SHOW_PLAYER_LAST_DELTA);
+
+    setTimeout(() => dispatch(ACTION_ENABLE_WHALES), WHALES_ENABLED_EVERY_TOT_SECONDS * 1000);
+
   },
 
   ACTION_DO_MARKET_CHANGE: ({dispatch, commit, state}: any) => {
@@ -149,8 +212,22 @@ export const Actions = {
     if (state.gameStatus === CONSTANTS.GAME_STATUS_ONGOING) {
       setTimeout(() => dispatch(ACTION_CHECK_SHOW_PLAYER_LAST_DELTA), 1000);
     }
-
   },
+
+  ACTION_ENABLE_WHALES: ({commit, state, dispatch}: any) => {
+    if (state.gameStatus === CONSTANTS.GAME_STATUS_ONGOING) {
+      commit('enableWhales');
+      setTimeout(() => dispatch(ACTION_ENABLE_WHALES), WHALES_ENABLED_EVERY_TOT_SECONDS * 1000);
+    }
+  },
+
+  ACTION_CHECK_IS_MOBILE: ({commit}: any) => {
+    isMobile().then(
+        () => commit('checkIsMobile', true),
+        () => commit('checkIsMobile', false),
+    );
+  },
+
 };
 
 

@@ -1,9 +1,19 @@
 <template>
   <div class="row">
     <div class="col text-center">
-      <h1>BTC</h1>
 
-      <router-link class="btn btn-primary" to="/game">Play</router-link>
+      <transition enter-active-class="animated fadeInDown" leave-active-class="animated fadeOut" >
+        <h1 v-show="showTitle" ref="title" >BTC</h1>
+      </transition>
+
+      <transition enter-active-class="animated fadeInDown" leave-active-class="animated fadeOut" >
+        <div v-show="showButton" >
+          <router-link ref="button" to="/game">
+            <b-button variant="primary" size="lg" ty>Play</b-button>
+          </router-link>
+        </div>
+      </transition>
+
     </div>
   </div>
 </template>
@@ -17,5 +27,21 @@ import ChangeBoard from '@/components/ChangeBoard.vue'; // @ is an alias to /src
     ChangeBoard,
   },
 })
-export default class Home extends Vue {}
+export default class Home extends Vue {
+    private showTitle: boolean = false;
+    private showButton: boolean = false;
+
+    private mounted() {
+        setTimeout(() => this.showTitle = true, 500);
+        setTimeout(() => this.showButton = true, 800);
+    }
+
+}
 </script>
+
+<style lang="scss">
+  h1 {
+    font-size: 60px;
+    margin-top: 60px;
+  }
+</style>

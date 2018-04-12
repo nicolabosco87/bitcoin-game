@@ -3,6 +3,7 @@
     <div class="container-fluid">
       <div class="row">
         <div class="col">
+
           <ChangeBoard/>
         </div>
       </div>

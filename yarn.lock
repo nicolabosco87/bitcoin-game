@@ -670,6 +670,10 @@
   version "2.7.10"
   resolved "https://registry.yarnpkg.com/@types/chart.js/-/chart.js-2.7.10.tgz#8dd15d5b57ef3c6d4e7ef3b66b0166d950b8f0c5"
 
+"@types/enquire.js@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/enquire.js/-/enquire.js-2.1.0.tgz#089d5657673befdf112c90da67cf27cf928b3dd1"
+
 "@types/jquery@*":
   version "3.3.1"
   resolved "https://registry.yarnpkg.com/@types/jquery/-/jquery-3.3.1.tgz#55758d44d422756d6329cbf54e6d41931d7ba28f"
@@ -926,6 +930,10 @@ alphanum-sort@^1.0.1, alphanum-sort@^1.0.2:
 amdefine@>=0.0.4:
   version "1.0.1"
   resolved "https://registry.yarnpkg.com/amdefine/-/amdefine-1.0.1.tgz#4a5282ac164729e93619bcfd3ad151f817ce91f5"
+
+animate-sass@^0.8.2:
+  version "0.8.2"
+  resolved "https://registry.yarnpkg.com/animate-sass/-/animate-sass-0.8.2.tgz#fbfa76e049177d217a50b0f99c8ee77af490b7d9"
 
 ansi-escapes@^1.0.0, ansi-escapes@^1.1.0:
   version "1.4.0"
@@ -2591,6 +2599,10 @@ enhanced-resolve@^3.0.0, enhanced-resolve@^3.4.0:
     memory-fs "^0.4.0"
     object-assign "^4.0.1"
     tapable "^0.2.7"
+
+enquire.js@^2.1.6:
+  version "2.1.6"
+  resolved "https://registry.yarnpkg.com/enquire.js/-/enquire.js-2.1.6.tgz#3e8780c9b8b835084c3f60e166dbc3c2a3c89814"
 
 entities@~1.1.1:
   version "1.1.1"
