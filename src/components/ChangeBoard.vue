@@ -7,17 +7,39 @@
                  :hide-footer="true" :hide-header-close="true" :ok-disabled="true" :cancel-disabled="true"
                  :no-close-on-backdrop="true" :no-close-on-esc="true" >
 
-            <div class="text-center" v-if="gameStatus == GAME_STATUS_START">
+            <div class="text-center" >
                 <p class="my-4">Press the "space bar" or press the Buy/Sell button for buying/selling Bitcoins.</p>
                 <p class="my-4">Try to gain cash as much you can.</p>
             </div>
-
-            <div v-if="gameStatus == GAME_STATUS_ENDED"></div>
 
             <p class="my-4 text-center">
                 <button class="btn btn-primary" @click="quitTutorialAndStartGame()">START GAME</button>
             </p>
         </b-modal>
+
+        <b-modal id="endGameModal" ref="endGameModal" :centered="true"
+                 :hide-header="true" :hide-footer="true" :hide-header-close="true" :ok-disabled="true" :cancel-disabled="true"
+                 :no-close-on-backdrop="true" :no-close-on-esc="true" >
+
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <td><b>Funds</b></td>
+                        <td>{{ playerFundsEur }} USD</td>
+                    </tr>
+                    <tr>
+                        <td><b>Delta</b></td>
+                        <td>{{ playerFundsEur - 100 }} USD</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <p class="my-4 text-center">
+                <button class="btn btn-primary" @click="quitTutorialAndStartGame()">RESTART GAME</button>
+            </p>
+        </b-modal>
+
+
 
         <div class="row">
             <div class="col-4 col-sm-12">
@@ -115,7 +137,7 @@ export default class ChangeBoard extends Vue {
     private GAME_STATUS_ONGOING: string = CONSTANTS.GAME_STATUS_ONGOING;
     private GAME_STATUS_ENDED: string = CONSTANTS.GAME_STATUS_ENDED;
     private showLevelAdvance: boolean = false;
-    private chartCalculatedHeight:number|boolean|string = false;
+    private chartCalculatedHeight: number|boolean|string = false;
 
     get buttonText() {
         return (this.invested) ? 'Sell' : 'Buy';
@@ -127,14 +149,19 @@ export default class ChangeBoard extends Vue {
 
     private quitTutorialAndStartGame() {
         (this.$refs.startGameModal as Modal).hide();
+        (this.$refs.endGameModal as Modal).hide();
         this.startGame();
 
         // Waiting for rendering time
         setTimeout(() => (this.$refs.gameGraph as Graph).reRenderChart(), 100);
     }
 
-    private showModal() {
+    private showStartModal() {
         (this.$refs.startGameModal as Modal).show();
+    }
+
+    private showEndModal() {
+        (this.$refs.endGameModal as Modal).show();
     }
 
     private chartHeight() {
@@ -145,7 +172,9 @@ export default class ChangeBoard extends Vue {
 
         this.chartHeight();
 
-        this.showModal();
+        if (this.gameStatus !== CONSTANTS.GAME_STATUS_ONGOING) {
+            this.showModal();
+        }
 
         // If spacebar has been pressed...
         window.addEventListener('keyup', (event: KeyboardEvent) => {
@@ -153,6 +182,26 @@ export default class ChangeBoard extends Vue {
              this.toggleInvest();
              }
          });
+    }
+
+    /**
+     * Opens modal depending by game status
+     */
+    private showModal() {
+        if (this.gameStatus === CONSTANTS.GAME_STATUS_START) {
+            this.showStartModal();
+        }
+
+        if (this.gameStatus === CONSTANTS.GAME_STATUS_ENDED) {
+            this.showEndModal();
+        }
+    }
+
+    @Watch('gameStatus')
+    private onGameStatusChanged(val: string, oldVal: string) {
+        if (this.gameStatus !== CONSTANTS.GAME_STATUS_ONGOING) {
+            this.showModal();
+        }
     }
 
     @Watch('level')

@@ -1,22 +1,16 @@
 import Vue from 'vue';
 import Vuex, {Store} from 'vuex';
 import * as CONSTANTS from './constants';
-import {isMobile} from "@/lib/Utils";
+import {isMobile} from '@/lib/Utils';
 
 export const ACTION_START_GAME = 'ACTION_START_GAME';
+export const ACTION_RESTART_GAME = 'ACTION_RESTART_GAME';
+export const ACTION_END_GAME = 'ACTION_END_GAME';
 export const ACTION_DO_MARKET_CHANGE = 'ACTION_DO_MARKET_CHANGE';
 export const ACTION_TOGGLE_INVEST = 'ACTION_TOGGLE_INVEST';
 export const ACTION_CHECK_SHOW_PLAYER_LAST_DELTA = 'ACTION_CHECK_SHOW_PLAYER_LAST_DELTA';
 export const ACTION_ENABLE_WHALES = 'ACTION_ENABLE_WHALES';
 export const ACTION_CHECK_IS_MOBILE = 'ACTION_CHECK_IS_MOBILE';
-export const MAX_GRAPH_CHANGES_TO_SHOW = 20;
-export const LEVEL_UPGRADE_EVERY_TOT_CHANGES = 20;
-export const WHALES_ENABLED_EVERY_TOT_SECONDS = 15;
-export const WHALES_CHANGES_DURATION = 7;
-
-const FUNDS_MAX_DECIMALS = 3;
-const TRUNC_FOR_MAX_DECIMALS = Math.pow(10, FUNDS_MAX_DECIMALS);
-
 
 Vue.use(Vuex);
 
@@ -82,6 +76,11 @@ export const Mutations = {
     return state;
   },
 
+  restartGame(state: StateInterface) {
+    state.gameStatus = CONSTANTS.GAME_STATUS_START;
+    return state;
+  },
+
   doMarketChange(state: StateInterface, customChange?: number) {
     let change = (customChange !== undefined)
         ? customChange
@@ -105,16 +104,17 @@ export const Mutations = {
 
       state.whalesTurn++;
 
-      if (state.whalesTurn > WHALES_CHANGES_DURATION) {
+      if (state.whalesTurn > CONSTANTS.WHALES_CHANGES_DURATION) {
         state.whalesTurn = 0;
         state.whalesEnabled = false;
       }
     }
 
     // Trunc the change value
-    change = (Math.trunc(change * TRUNC_FOR_MAX_DECIMALS)) / TRUNC_FOR_MAX_DECIMALS;
+    change = (Math.trunc(change * CONSTANTS.TRUNC_FOR_MAX_DECIMALS)) / CONSTANTS.TRUNC_FOR_MAX_DECIMALS;
     state.currentChangeValue += change;
-    state.currentChangeValue = (Math.trunc(state.currentChangeValue * TRUNC_FOR_MAX_DECIMALS)) / TRUNC_FOR_MAX_DECIMALS;
+    state.currentChangeValue = (Math.trunc(state.currentChangeValue * CONSTANTS.TRUNC_FOR_MAX_DECIMALS))
+      / CONSTANTS.TRUNC_FOR_MAX_DECIMALS;
 
     // Minimun change allowed
     if (state.currentChangeValue <= 0.1) {
@@ -125,15 +125,15 @@ export const Mutations = {
     state.changeValueChanges++;
     if (state.invested) {
       state.playerFundsEur =
-          Math.trunc(state.playerFundsBtc * state.currentChangeValue * TRUNC_FOR_MAX_DECIMALS)
-          / TRUNC_FOR_MAX_DECIMALS;
+          Math.trunc(state.playerFundsBtc * state.currentChangeValue * CONSTANTS.TRUNC_FOR_MAX_DECIMALS)
+          / CONSTANTS.TRUNC_FOR_MAX_DECIMALS;
     } else {
       state.playerFundsBtc =
-          Math.trunc(state.playerFundsEur / state.currentChangeValue * TRUNC_FOR_MAX_DECIMALS)
-          / TRUNC_FOR_MAX_DECIMALS;
+          Math.trunc(state.playerFundsEur / state.currentChangeValue * CONSTANTS.TRUNC_FOR_MAX_DECIMALS)
+          / CONSTANTS.TRUNC_FOR_MAX_DECIMALS;
     }
 
-    if (state.changeValueChanges > (LEVEL_UPGRADE_EVERY_TOT_CHANGES - 1)) {
+    if (state.changeValueChanges > (CONSTANTS.LEVEL_UPGRADE_EVERY_TOT_CHANGES - 1)) {
       state.level++;
       state.changeValueChanges = 0;
     }
@@ -141,7 +141,7 @@ export const Mutations = {
 
 
 
-    if (state.lastChangesValues.length > MAX_GRAPH_CHANGES_TO_SHOW) {
+    if (state.lastChangesValues.length > CONSTANTS.MAX_GRAPH_CHANGES_TO_SHOW) {
       state.lastChangesValues.shift();
     }
     state.lastChangesValues.push(state.currentChangeValue);
@@ -155,8 +155,9 @@ export const Mutations = {
     if (state.invested) {
       state.playerFundsEurOnInvest = state.playerFundsEur;
     } else {
-      state.playerLastDelta = Math.trunc((state.playerFundsEur - state.playerFundsEurOnInvest) * TRUNC_FOR_MAX_DECIMALS)
-          / TRUNC_FOR_MAX_DECIMALS;
+      state.playerLastDelta =
+        Math.trunc((state.playerFundsEur - state.playerFundsEurOnInvest) * CONSTANTS.TRUNC_FOR_MAX_DECIMALS)
+        / CONSTANTS.TRUNC_FOR_MAX_DECIMALS;
       state.showPlayerLastDelta = true;
       const now = new Date();
       state.playerLastDeltaLastShow = now.getTime();
@@ -184,6 +185,10 @@ export const Mutations = {
     state.isMobile = payload;
     return state;
   },
+
+  endGame(state: StateInterface) {
+    state.gameStatus = CONSTANTS.GAME_STATUS_ENDED;
+  },
 };
 
 
@@ -193,13 +198,27 @@ export const Actions = {
     setTimeout(() => dispatch(ACTION_DO_MARKET_CHANGE), 1000);
     dispatch(ACTION_CHECK_SHOW_PLAYER_LAST_DELTA);
 
-    setTimeout(() => dispatch(ACTION_ENABLE_WHALES), WHALES_ENABLED_EVERY_TOT_SECONDS * 1000);
+    setTimeout(() => dispatch(ACTION_ENABLE_WHALES), CONSTANTS.WHALES_ENABLED_EVERY_TOT_SECONDS * 1000);
+  },
 
+  ACTION_RESTART_GAME: ({commit}: any) => {
+    commit('restartGame');
+  },
+
+  ACTION_END_GAME: ({commit}: any) => {
+    commit('endGame');
   },
 
   ACTION_DO_MARKET_CHANGE: ({dispatch, commit, state}: any) => {
-    commit('doMarketChange');
-    setTimeout(() => dispatch(ACTION_DO_MARKET_CHANGE), Math.ceil(Math.random() * 1000) );
+    if (state.gameStatus === CONSTANTS.GAME_STATUS_ONGOING) {
+
+      if (state.level >= CONSTANTS.FINAL_LEVEL) {
+        commit('endGame');
+      } else {
+        commit('doMarketChange');
+        setTimeout(() => dispatch(ACTION_DO_MARKET_CHANGE), Math.ceil(Math.random() * 1000));
+      }
+    }
   },
 
   ACTION_TOGGLE_INVEST: ({dispatch, commit}: any) => {
@@ -217,7 +236,7 @@ export const Actions = {
   ACTION_ENABLE_WHALES: ({commit, state, dispatch}: any) => {
     if (state.gameStatus === CONSTANTS.GAME_STATUS_ONGOING) {
       commit('enableWhales');
-      setTimeout(() => dispatch(ACTION_ENABLE_WHALES), WHALES_ENABLED_EVERY_TOT_SECONDS * 1000);
+      setTimeout(() => dispatch(ACTION_ENABLE_WHALES), CONSTANTS.WHALES_ENABLED_EVERY_TOT_SECONDS * 1000);
     }
   },
 

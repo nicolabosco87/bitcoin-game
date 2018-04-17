@@ -13,25 +13,34 @@
 </template>
 
 <script lang="ts">
-    import {Component, Prop, Vue} from 'vue-property-decorator';
+    import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
+    import {State} from 'vuex-class';
+    import * as CONSTANTS from '@/constants';
 
     @Component
     export default class FullScreenMessage extends Vue {
         @Prop() public timeout!: number;
         @Prop({default: ''}) public classes!: string;
+        @State('gameStatus') private gameStatus!: string;
 
 
         private showMessage: boolean = false;
 
         public show() {
             this.showMessage = true;
-            setTimeout(() => this.hide(), this.timeout + 30000);
+            setTimeout(() => this.hide(), this.timeout + 1000);
         }
 
         public hide() {
             this.showMessage = false;
         }
 
+        @Watch('gameStatus')
+        private onGameStatusChange(val: string, oldVal: string) {
+            if (val !== CONSTANTS.GAME_STATUS_ONGOING) {
+                this.hide();
+            }
+        }
     }
 </script>
 

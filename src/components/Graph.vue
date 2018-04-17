@@ -9,7 +9,7 @@
 <script lang="ts">
     import {Component, Prop, Vue, Watch} from 'vue-property-decorator';
     import Chart, { ChartData, ChartOptions } from 'chart.js';
-    import {State} from "vuex-class";
+    import {State} from 'vuex-class';
 
     @Component
     export default class Graph extends Vue {
@@ -32,7 +32,7 @@
         public renderChart(data: any, options: any = {}) {
             const canvas: any = this.$refs.canvas;
 
-            let optionsWithDefaults: ChartOptions = Object.assign(options, {
+            const optionsWithDefaults: ChartOptions = Object.assign(options, {
                 legend: {
                     display: false,
                 },
@@ -42,8 +42,8 @@
                 scales: {
                     xAxes: [{
                         display: !this.isMobile,
-                    }]
-                }
+                    }],
+                },
             });
 
             this.chart = new Chart(

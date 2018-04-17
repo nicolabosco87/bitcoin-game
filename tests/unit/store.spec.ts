@@ -1,6 +1,7 @@
 import { expect } from 'chai';
 import { shallow } from '@vue/test-utils';
-import { defaultStore, StateInterface, Mutations, WHALES_CHANGES_DURATION } from '../../src/store';
+import { defaultStore, StateInterface, Mutations} from '../../src/store';
+import { WHALES_CHANGES_DURATION } from '@/constants';
 
 describe('Store', () => {
   it('Calculate EUR/BTC changes', () => {

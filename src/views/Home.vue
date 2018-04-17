@@ -3,7 +3,7 @@
     <div class="col text-center">
 
       <transition enter-active-class="animated fadeInDown" leave-active-class="animated fadeOut" >
-        <h1 v-show="showTitle" ref="title" >BTC</h1>
+        <h1 v-show="showTitle" ref="title" >Bitcoin Wizard</h1>
       </transition>
 
       <transition enter-active-class="animated fadeInDown" leave-active-class="animated fadeOut" >
